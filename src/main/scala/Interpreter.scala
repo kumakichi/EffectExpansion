@@ -5,17 +5,30 @@ import Wrappers.RichBody
 import soot.options.Options
 import soot.{SootMethod, Unit => SootUnit}
 
-case class Interpreter(options: Options, entry: SootMethod) {
-  def interpret(): Unit = {
-    var prologue: Option[Needle] = Some(Needle(entry.retrieveActiveBody().units.getFirst, entry))
-    debug("interpret", s"starting vm: $prologue")
-    while (prologue.isDefined) {
-      debug("interpret", s"starting vm: $prologue")
-      prologue = for {
-        prologue <- prologue
-        prologue <- interpret(prologue)
-      } yield prologue
+import scala.collection.mutable
+
+object Interpreter {
+
+  def bootstrap(options: Options, entry: SootMethod, args: Array[Types], receiver: Option[Types]): Unit = {
+    debug("bootstrap", s"starting vm: $options")
+    interpret(entry, args, receiver)
+  }
+
+  def interpret(entry: SootMethod, args: Array[Types], receiver: Option[Types]): Unit = {
+    val zygote   = Scope(mutable.Map(), None, entry, args, receiver)
+    val prologue = zygote.needle
+    debug("interpret", s"starting vm: $prologue ")
+    while (prologue.next.isDefined) {
+      val instruction = prologue.advance
+      debug("interpret", s"running instruction: $instruction")
+      interpret(instruction, zygote)
     }
   }
-  def interpret(needle: Needle): Option[Needle] = ???
+
+  def interpret(instruction: SootUnit, scope: Scope) = {
+    instruction match {
+      case statement: StatementSyntax => statement.eval(scope)
+      case _                          => raise("interpret", s"invalid unit: $instruction")
+    }
+  }
 }
