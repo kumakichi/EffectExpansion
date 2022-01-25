@@ -1,6 +1,6 @@
 # EffectExpansion
 
-a concrete interpreter for jimple code
+concrete virtual machine
 
 ## TODO
 
