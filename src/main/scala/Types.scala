@@ -31,7 +31,13 @@ case class Scope(
   val needle = Needle(method)
 }
 
-sealed trait Types
+object Scope {
+  implicit object StaticScope {
+    val global: mutable.Map[String, Types] = mutable.Map()
+  }
+}
+
+sealed trait Types {}
 sealed class Primitive extends Types
 sealed class Reference extends Types
 
